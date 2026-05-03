@@ -46,7 +46,7 @@ which cosense
 claude   # この shell から Claude Code を起動すると skill が呼ぶ `cosense` は src/cli.ts を直接実行する
 ```
 
-`bin/cosense` は `node src/cli.ts` に exec する単純な shell shim。`src/cli.ts` は node_modules 配下ではないので Node 24+ の type stripping がそのまま効く。リポジトリの外に cd すれば direnv が自動でPATHを元に戻す。
+`bin/cosense` は tsx の programmatic API で `src/cli.ts` を import する Node ESM shim。`npm install -g` 経由でも同じファイルが配布物の bin として使われる。リポジトリの外に cd すれば direnv が自動でPATHを元に戻す。
 
 ## License
 
