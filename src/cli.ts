@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   browseRelatedPages,
   browseRelatedPagesHelp,
@@ -56,6 +59,15 @@ interface CommandSpec {
   help: string;
 }
 
+const packageJsonPath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'package.json'
+);
+const { version } = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+  version: string;
+};
+
 const commands: Record<string, CommandSpec> = {
   browseRelatedPages: {
     handler: browseRelatedPages,
@@ -108,12 +120,13 @@ const commands: Record<string, CommandSpec> = {
 const renderTopLevelHelp = (): string => {
   const nameWidth = Math.max(...Object.keys(commands).map(n => n.length));
   const lines = [
-    'cosense - Cosense（旧Scrapbox）のページを読み・調べるCLI',
+    `cosense v${version} - Cosenseのページを読み・調べるCLI`,
     '',
     'Usage:',
     '  cosense <command> [args...]',
     '  cosense <command> --help    個別コマンドの詳細を表示',
     '  cosense --help              このヘルプを表示',
+    '  cosense --version           バージョンを表示',
     '',
     'Commands:'
   ];
@@ -130,11 +143,16 @@ if (command === '--help') {
   process.exit(0);
 }
 
+if (command === '--version') {
+  process.stdout.write(`cosense v${version}\n`);
+  process.exit(0);
+}
+
 const spec = command ? commands[command] : undefined;
 if (!spec) {
   process.stderr.write(
-    `Usage: cosense <${Object.keys(commands).join('|')}> ...\n` +
-      '       cosense --help\n'
+    `invalid command${command ? `: ${command}` : ''}\n` +
+      'See `cosense --help` for usage.\n'
   );
   process.exit(2);
 }
