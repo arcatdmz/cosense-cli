@@ -70,6 +70,7 @@ const { version } = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
 };
 
 const commands: Record<string, CommandSpec> = {
+  login: { handler: login, summary: loginSummary, help: loginHelp },
   browseRelatedPages: {
     handler: browseRelatedPages,
     summary: browseRelatedPagesSummary,
@@ -96,7 +97,6 @@ const commands: Record<string, CommandSpec> = {
     summary: list2hopLinksSummary,
     help: list2hopLinksHelp
   },
-  login: { handler: login, summary: loginSummary, help: loginHelp },
   searchVector: {
     handler: searchVector,
     summary: searchVectorSummary,
