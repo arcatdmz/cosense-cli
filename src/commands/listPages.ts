@@ -25,6 +25,10 @@ Usage:
                   pinned page は常に先頭に来る
   --limit <N>     1リクエストで返るページ数（既定 100、最大 1000）
   --skip <N>      先頭から N 件スキップして取得（既定 0、最大 10000000）
+  --filter <name> リストされるページを絞り込む。
+                  本文中に [name.icon] を持つページと
+                  指定したnameを持つユーザーがこれまでに編集したページが返る
+                  ユーザー名で絞り込む場合は user.displayName ではなく users.name を指定する
 
 戻り値（top-levelの主なkey）:
   projectName  string        プロジェクト名
@@ -67,11 +71,12 @@ interface ParsedArgs {
   sort?: string;
   limit?: string;
   skip?: string;
+  filter?: string;
 }
 
 const parseArgs = (args: string[]): ParsedArgs => {
   const usage =
-    'Usage: cosense listPages <projectUrl> [--sort <name>] [--limit <N>] [--skip <N>]';
+    'Usage: cosense listPages <projectUrl> [--sort <name>] [--limit <N>] [--skip <N>] [--filter <name>]';
   let url: string | undefined;
   const parsed: Partial<ParsedArgs> = {};
   for (let i = 0; i < args.length; i++) {
@@ -104,6 +109,12 @@ const parseArgs = (args: string[]): ParsedArgs => {
         throw new Error(`--skip must be a non-negative integer, got: ${value}`);
       }
       parsed.skip = value;
+    } else if (arg === '--filter') {
+      const value = next();
+      if (value.trim() === '') {
+        throw new Error('--filter must not be empty');
+      }
+      parsed.filter = value;
     } else if (arg.startsWith('--')) {
       throw new Error(`Unknown option: ${arg}\n${usage}`);
     } else if (!url) {
@@ -127,12 +138,16 @@ interface ListPagesData {
 }
 
 export const listPages = async (args: string[]): Promise<void> => {
-  const { url, sort, limit, skip } = parseArgs(args);
+  const { url, sort, limit, skip, filter } = parseArgs(args);
   const { origin, projectName } = parseProjectUrl(url);
   const params = new URLSearchParams();
   if (sort) params.set('sort', sort);
   if (limit) params.set('limit', limit);
   if (skip) params.set('skip', skip);
+  if (filter !== undefined) {
+    params.set('filterType', 'icon');
+    params.set('filterValue', filter);
+  }
   const queryString = params.toString();
   const apiUrl = `${origin}/api/pages/${projectName}/${queryString ? `?${queryString}` : ''}`;
   const credential = resolveCredential(origin, projectName);
