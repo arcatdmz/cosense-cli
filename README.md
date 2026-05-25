@@ -1,6 +1,6 @@
 # @helpfeel/cosense-cli
 
-Cosenseのページを読む・調べるCLIとAgent Skill。ページを書く機能はまだ実装できていない
+Cosenseのページを読み・調べ・編集する為のCLIとAgent Skill
 
 ## Install
 

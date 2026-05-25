@@ -1,7 +1,7 @@
 {
   "name": "@helpfeel/cosense-cli",
   "version": "1.2.0",
-  "description": "Cosense (旧Scrapbox) のページを読み・調べるCLI",
+  "description": "Cosense (旧Scrapbox) のページを読み・調べ・編集するCLI",
   "homepage": "https://github.com/nota/cosense-cli",
   "license": "MIT",
   "repository": {

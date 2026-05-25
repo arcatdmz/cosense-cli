@@ -164,7 +164,7 @@ const commands: Record<string, CommandSpec> = {
 const renderTopLevelHelp = (): string => {
   const nameWidth = Math.max(...Object.keys(commands).map(n => n.length));
   const lines = [
-    `cosense v${version} - Cosenseのページを読み・調べるCLI`,
+    `cosense v${version} - Cosenseのページを読み・調べ・編集するCLI`,
     '',
     'Usage:',
     '  cosense <command> [args...]',
