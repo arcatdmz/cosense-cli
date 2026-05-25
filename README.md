@@ -15,6 +15,9 @@ cosense --help
 
 ```
 /plugin marketplace add nota/cosense-cli
+```
+
+```
 /plugin install cosense-cli@cosense-cli
 ```
 
