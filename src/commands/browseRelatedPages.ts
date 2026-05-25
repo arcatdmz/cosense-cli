@@ -1,3 +1,9 @@
+import {
+  buildGroups,
+  dedupAndSortByPageRank,
+  type Page,
+  renderGroups
+} from '../lib/relatedPagesFormat.ts';
 import { fetchRelatedPages } from '../lib/relatedPages.ts';
 
 export const browseRelatedPagesSummary =
@@ -28,67 +34,6 @@ Usage:
   - タイトル
 `;
 
-const stackPattern =
-  /^([^\d]{3,})\s*([\d\-./()<>{}（）月火水木金土日年春夏秋冬]+|\d+ - [a-zA-Z])$/;
-
-const STACK_PREVIEW = 1;
-
-interface Page {
-  title: string;
-  titleLc?: string;
-  pageRank?: number;
-}
-
-function detectStackName(title: string): string | null {
-  return stackPattern.exec(title)?.[1] ?? null;
-}
-
-type Group =
-  | { type: 'page'; title: string }
-  | { type: 'stack'; name: string; titles: string[] };
-
-function buildGroups(pages: Page[]): Group[] {
-  const groups: Group[] = [];
-  const stackIndexByName = new Map<string, number>();
-
-  for (const page of pages) {
-    const stackName = detectStackName(page.title);
-    if (stackName !== null) {
-      const existingIdx = stackIndexByName.get(stackName);
-      if (existingIdx !== undefined) {
-        (groups[existingIdx] as Extract<Group, { type: 'stack' }>).titles.push(
-          page.title
-        );
-      } else {
-        stackIndexByName.set(stackName, groups.length);
-        groups.push({ type: 'stack', name: stackName, titles: [page.title] });
-      }
-    } else {
-      groups.push({ type: 'page', title: page.title });
-    }
-  }
-
-  return groups;
-}
-
-function renderGroups(groups: Group[]): string {
-  const lines: string[] = [];
-  for (const group of groups) {
-    if (group.type === 'page') {
-      lines.push(`- ${group.title}`);
-    } else {
-      for (const title of group.titles.slice(0, STACK_PREVIEW)) {
-        lines.push(`- ${title}`);
-      }
-      const remaining = group.titles.length - STACK_PREVIEW;
-      if (remaining > 0) {
-        lines.push(`  他、${remaining}件の${group.name.trimEnd()}を省略します`);
-      }
-    }
-  }
-  return lines.join('\n');
-}
-
 export const browseRelatedPages = async (args: string[]): Promise<void> => {
   if (args.length !== 1) {
     throw new Error('Usage: cosense browseRelatedPages <pageUrl>');
@@ -104,30 +49,21 @@ export const browseRelatedPages = async (args: string[]): Promise<void> => {
     throw result1hop.reason;
   }
 
-  const toTitleLc = (title: string): string =>
-    title.replace(/ /g, '_').toLowerCase();
-
-  const seenTitleLc = new Set<string>();
-  const collect = (pages: Page[] | undefined): Page[] => {
-    const collected: Page[] = [];
-    for (const page of pages ?? []) {
-      const tlc = page.titleLc ?? toTitleLc(page.title);
-      if (!seenTitleLc.has(tlc)) {
-        seenTitleLc.add(tlc);
-        collected.push(page);
-      }
-    }
-    collected.sort((a, b) => (b.pageRank ?? 0) - (a.pageRank ?? 0));
-    return collected;
-  };
-
+  // seen は 1-hop と 2-hop で共有して、 1-hop に出たページが 2-hop にも再掲されないようにする
+  const seen = new Set<string>();
   const pages1hop =
     result1hop.status === 'fulfilled'
-      ? collect((result1hop.value as { links1hop?: Page[] }).links1hop)
+      ? dedupAndSortByPageRank(
+          (result1hop.value as { links1hop?: Page[] }).links1hop,
+          seen
+        )
       : [];
   const pages2hop =
     result2hop.status === 'fulfilled'
-      ? collect((result2hop.value as { links2hop?: Page[] }).links2hop)
+      ? dedupAndSortByPageRank(
+          (result2hop.value as { links2hop?: Page[] }).links2hop,
+          seen
+        )
       : [];
 
   const sections: string[] = [];

@@ -3,6 +3,11 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  browsePage,
+  browsePageHelp,
+  browsePageSummary
+} from './commands/browsePage.ts';
+import {
   browseRelatedPages,
   browseRelatedPagesHelp,
   browseRelatedPagesSummary
@@ -92,6 +97,11 @@ const commands: Record<string, CommandSpec> = {
     handler: listProjects,
     summary: listProjectsSummary,
     help: listProjectsHelp
+  },
+  browsePage: {
+    handler: browsePage,
+    summary: browsePageSummary,
+    help: browsePageHelp
   },
   browseRelatedPages: {
     handler: browseRelatedPages,
