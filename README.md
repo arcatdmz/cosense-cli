@@ -1,17 +1,10 @@
 # @helpfeel/cosense-cli
 
-Cosenseのページを読み・調べ・編集する為のCLIとAgent Skill
+Cosenseのページを読み・調べ・編集するAgent SkillとCLI
 
-## Install
+## Install Agent Skill
 
-### CLI
-
-```bash
-npm install -g @helpfeel/cosense-cli
-cosense --help
-```
-
-### Claude Code Agent Skill
+### for Claude Code
 
 ```
 /plugin marketplace add helpfeel/cosense-cli
@@ -21,7 +14,20 @@ cosense --help
 /plugin install cosense-cli@cosense-cli
 ```
 
-Skillの実行にはCLIが必要
+### for Codex
+
+```
+$skill-installer https://github.com/helpfeel/cosense-cli
+```
+
+## Install CLI
+
+Skillの実行にはCLIが必要です
+
+```bash
+npm install -g @helpfeel/cosense-cli
+cosense --help
+```
 
 ## 開発
 
