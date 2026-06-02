@@ -3,6 +3,15 @@
 CLI コマンドの仕様や実行形式は [SKILL.md](SKILL.md) を参照する。
 各コマンドの正確な引数・入力形式・出力フォーマットは `cosense <command> --help` を見る。
 
+## Windowsで日本語を書き込むときの注意
+
+Windows 環境で日本語を含む本文や ops JSON を `previewEdit` に渡す場合は、PowerShell の pipe / here-string 経由ではなく、UTF-8 の一時ファイルを作って `--input-file <path>` で渡すことを優先する。PowerShell から `node -` や `cmd.exe /c cosense.cmd ...` に日本語を標準入力で渡すと、CLI に届く前に文字が `?` へ変換されることがある。
+
+```powershell
+cosense.cmd previewEdit --input-file ops.json <projectUrl> <pageId>
+cosense.cmd previewEdit --new --input-file body.txt <projectUrl>
+```
+
 ## ワークフロー
 
 以下の手順1〜4は必ず順番に実行する。

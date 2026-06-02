@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { parseProjectUrlStrict } from '../lib/parseUrl.ts';
 import { requestJson } from '../lib/request.ts';
 import { resolveUserCredential } from '../lib/settings.ts';
@@ -11,6 +12,8 @@ export const previewEditHelp = `previewEdit - ページ編集opsをdry-runして
 Usage:
   cosense previewEdit <projectUrl> <pageId> < ops.json      既存ページの編集 (stdinはops JSON)
   cosense previewEdit --new <projectUrl> < body.txt         新規ページ作成 (stdinはプレーンテキスト本文)
+  cosense previewEdit --input-file ops.json <projectUrl> <pageId>
+  cosense previewEdit --new --input-file body.txt <projectUrl>
   printf '%s' '<opsJSON>' | cosense previewEdit <projectUrl> <pageId>
   printf '%s' '<text>'    | cosense previewEdit --new <projectUrl>
 
@@ -22,6 +25,9 @@ Usage:
 オプション:
   --new   stdin をプレーンテキスト本文として受け取り、 新規ページを作る。 改行で複数行に分割され、
           1行目が page title、 2行目以降が本文として扱われる。 ops JSON を組み立てる必要は無い
+  --input-file <path>
+          stdin の代わりに UTF-8 のファイルから入力を読み込む。　Windows で shell pipeline や
+          here-string を使うと文字化けが起きることがあり、そうした場合の対処に使える
 
 stdinから受け取る入力形式（既存ページ編集モード, JSON）:
   {
@@ -238,19 +244,31 @@ interface ParsedArgs {
   isNew: boolean;
   projectUrl: string;
   pageId: string | undefined;
+  inputFile: string | undefined;
 }
 
 const parseArgs = (args: string[]): ParsedArgs => {
   const usage =
     'Usage: cosense previewEdit <projectUrl> <pageId> < ops.json (use --new <projectUrl> < body.txt for new pages)';
   let isNew = false;
+  let inputFile: string | undefined;
   const positional: string[] = [];
-  for (const arg of args) {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i] as string;
     if (arg === '--new') {
       if (isNew) {
         throw new Error(`Duplicate option: --new\n${usage}`);
       }
       isNew = true;
+    } else if (arg === '--input-file') {
+      if (inputFile !== undefined) {
+        throw new Error(`Duplicate option: --input-file\n${usage}`);
+      }
+      const value = args[++i];
+      if (!value) {
+        throw new Error(`Missing value for --input-file\n${usage}`);
+      }
+      inputFile = value;
     } else if (arg.startsWith('--')) {
       throw new Error(`Unknown option: ${arg}\n${usage}`);
     } else {
@@ -263,7 +281,12 @@ const parseArgs = (args: string[]): ParsedArgs => {
         'Usage: cosense previewEdit --new <projectUrl> < body.txt'
       );
     }
-    return { isNew, projectUrl: positional[0] as string, pageId: undefined };
+    return {
+      isNew,
+      projectUrl: positional[0] as string,
+      pageId: undefined,
+      inputFile
+    };
   }
   if (positional.length !== 2) {
     throw new Error(usage);
@@ -271,23 +294,26 @@ const parseArgs = (args: string[]): ParsedArgs => {
   return {
     isNew,
     projectUrl: positional[0] as string,
-    pageId: positional[1] as string
+    pageId: positional[1] as string,
+    inputFile
   };
 };
 
 export const previewEdit = async (args: string[]): Promise<void> => {
-  const { isNew, projectUrl, pageId } = parseArgs(args);
+  const { isNew, projectUrl, pageId, inputFile } = parseArgs(args);
 
-  if (process.stdin.isTTY) {
+  if (!inputFile && process.stdin.isTTY) {
     throw new Error(
       isNew
-        ? 'previewEdit --new reads plain text body from stdin. Pipe it in, e.g. `printf "Title\\nbody\\n" | cosense previewEdit --new <projectUrl>`.'
-        : 'previewEdit reads ops JSON from stdin. Pipe it in, e.g. `cosense previewEdit <projectUrl> <pageId> < ops.json`.'
+        ? 'previewEdit --new reads plain text body from stdin or --input-file. Pipe it in, e.g. `printf "Title\\nbody\\n" | cosense previewEdit --new <projectUrl>`, or use `cosense previewEdit --new --input-file body.txt <projectUrl>`.'
+        : 'previewEdit reads ops JSON from stdin or --input-file. Pipe it in, e.g. `cosense previewEdit <projectUrl> <pageId> < ops.json`, or use `cosense previewEdit --input-file ops.json <projectUrl> <pageId>`.'
     );
   }
 
   const { origin, projectName } = parseProjectUrlStrict(projectUrl);
-  const stdinRaw = await readStdin();
+  const stdinRaw = inputFile
+    ? await readFile(inputFile, 'utf8')
+    : await readStdin();
   if (!stdinRaw.trim()) {
     throw new Error(
       isNew
