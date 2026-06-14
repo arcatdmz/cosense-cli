@@ -11,6 +11,12 @@ description: >-
 `cosense` CLIを使い、Cosenseのページを読み・調べてユーザーに回答する。
 書き込み (ページ編集・コメント追記等) はユーザーが明示的に指示した時のみ行う。
 
+## 形式の境界
+
+Cosense/Scrapbox記法は、このSkillと `cosense` CLIの内側だけで扱う。
+Cosenseページ本文をMarkdown向けの小さなツール、要約、Slack投稿、通常のassistant文脈へ渡す時は、先にMarkdownへ変換するか要約する。
+記法をまとめて変換する必要がある場合は、利用できるなら `sb2md` (`arcatdmz/sb2md`) を優先する。
+
 ## Cosenseとはどういう物か
 
 Cosenseは複数のページ同士をリンクさせ、複雑な情報をナレッジグラフとして表現するweb状のWiKiである。
