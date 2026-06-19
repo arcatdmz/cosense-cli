@@ -17,6 +17,14 @@ Cosense/Scrapbox記法は、このSkillと `cosense` CLIの内側だけで扱う
 Cosenseページ本文をMarkdown向けの小さなツール、要約、Slack投稿、通常のassistant文脈へ渡す時は、先にMarkdownへ変換するか要約する。
 記法をまとめて変換する必要がある場合は、利用できるなら `sb2md` (`arcatdmz/sb2md`) を優先する。
 
+## Assistant環境での認証ルール
+
+- `whoami` と `listProjects` は明示的なorigin引数を必要とする。通常は `https://scrapbox.io` を渡す
+- Agent自身は `cosense login` を実行しない。`cosense login` はユーザーが対話的に実行する操作である
+- assistant環境では既存の秘密情報を再利用する。`COSENSE_PAT` が未設定で、`COSENSE_PERSONAL_ACCESS_TOKEN` または `SCRAPBOX_PERSONAL_ACCESS_TOKEN` が存在する場合は、CLIを呼ぶ前にその値を `COSENSE_PAT` へ橋渡しする
+- 秘密設定の診断では、キーの有無とコマンドの成否だけを報告する。トークン値や秘密設定の生の内容は出力しない
+- sandboxや `bwrap` の起動失敗は、Cosenseの認証失敗とは分けて扱う。sandbox制約でコマンドを起動できない場合は、認証情報不足としてではなく、その旨を明確に報告する
+
 ## Cosenseとはどういう物か
 
 Cosenseは複数のページ同士をリンクさせ、複雑な情報をナレッジグラフとして表現するweb状のWiKiである。
